@@ -30,8 +30,8 @@ pipeline {
                     sh '''
                     scp -o StrictHostKeyChecking=no \
                         *.py requirements.txt \
-                        azureuser@<deployment-vm-ip>:/home/azureuser/app/
-                    ssh azureuser@<deployment-vm-ip> '
+                        azureuser@<20.17.98.51>:/home/azureuser/app/
+                    ssh azureuser@<20.17.98.51> '
                         cd /home/azureuser/app &&
                         pip install -r requirements.txt &&
                         nohup python app.py > app.log 2>&1 &
@@ -42,3 +42,4 @@ pipeline {
         }
     }
 }
+
