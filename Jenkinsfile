@@ -1,45 +1,44 @@
 pipeline {
     agent any
     
+    triggers {
+        pollSCM('* * * * *')
+    }
+    
     stages {
-        stage('Checkout Code') {
+        stage('Checkout') {
             steps {
                 checkout scm
-                sh 'echo "✅ Code checked out from GitHub"'
             }
         }
         
-        stage('Build') {
+        stage('Install Dependencies') {
             steps {
-                sh 'echo "🔨 Building application..."'
-                sh 'ls -la'
+                sh 'pip install -r requirements.txt'
             }
         }
         
         stage('Test') {
             steps {
-                sh 'echo "🧪 Running tests..."'
-                sh 'echo "All tests passed!"'
+                sh 'python -m pytest tests/ -v'  # If you have tests
             }
         }
         
-        stage('Deploy') {
+        stage('Deploy to Azure VM') {
             steps {
-                sh 'echo "🚀 Deploying to Azure VM..."'
-                sh 'echo "Deployment completed successfully!"'
+                sshagent(['azure-deployment-key']) {
+                    sh '''
+                    scp -o StrictHostKeyChecking=no \
+                        *.py requirements.txt \
+                        azureuser@<deployment-vm-ip>:/home/azureuser/app/
+                    ssh azureuser@<deployment-vm-ip> '
+                        cd /home/azureuser/app &&
+                        pip install -r requirements.txt &&
+                        nohup python app.py > app.log 2>&1 &
+                    '
+                    '''
+                }
             }
-        }
-    }
-    
-    post {
-        always {
-            echo '📋 Pipeline completed!'
-        }
-        success {
-            echo '🎉 Pipeline succeeded!'
-        }
-        failure {
-            echo '❌ Pipeline failed!'
         }
     }
 }
